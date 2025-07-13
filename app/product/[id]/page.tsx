@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Plus, Minus, Star } from "lucide-react";
@@ -9,16 +5,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { useCartStore } from "@/lib/store";
-import { products } from "@/lib/products";
+import { products } from "@/lib/products"; // static product list
 
-export default function ProductDetail() {
-  const params = useParams();
-  const { addItem, updateQuantity, items } = useCartStore();
-  const [quantity, setQuantity] = useState(1);
+export async function generateStaticParams() {
+  return products.map((product) => ({
+    id: product.id.toString(),
+  }));
+}
 
+export default function ProductDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const product = products.find((p) => p.id === params.id);
-  const cartItem = items.find((item) => item.id === params.id);
 
   if (!product) {
     return (
@@ -42,20 +42,8 @@ export default function ProductDetail() {
     );
   }
 
-  const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) {
-      addItem(product);
-    }
-  };
-
-  const handleQuantityChange = (newQuantity: number) => {
-    if (newQuantity >= 1) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
+  const renderStars = (rating: number) =>
+    Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
         className={`h-5 w-5 ${
@@ -67,7 +55,6 @@ export default function ProductDetail() {
         }`}
       />
     ));
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -110,15 +97,10 @@ export default function ProductDetail() {
               {product.brand && (
                 <p className="text-lg text-gray-600 mb-4">by {product.brand}</p>
               )}
-
-              {product.rating && (
-                <div className="flex items-center space-x-2 mb-4">
-                  <div className="flex items-center">
-                    {renderStars(product.rating)}
-                  </div>
-                  <span className="text-gray-600">({product.rating}/5)</span>
-                </div>
-              )}
+              <div className="flex items-center space-x-2 mb-4">
+                {renderStars(product.rating!)}
+                <span className="text-gray-600">({product.rating}/5)</span>
+              </div>
             </div>
 
             <div className="text-4xl font-bold text-blue-600">
@@ -137,49 +119,6 @@ export default function ProductDetail() {
               <span className="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
                 {product.category}
               </span>
-            </div>
-
-            {/* Quantity Selector */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Quantity</h3>
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(quantity - 1)}
-                  disabled={quantity <= 1}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <span className="text-xl font-semibold w-12 text-center">
-                  {quantity}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(quantity + 1)}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Add to Cart Button */}
-            <div className="space-y-3">
-              <Button
-                onClick={handleAddToCart}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg"
-                size="lg"
-              >
-                Add {quantity} to Cart - $
-                {(product.price * quantity).toFixed(2)}
-              </Button>
-
-              {cartItem && (
-                <p className="text-center text-green-600 font-medium">
-                  {cartItem.quantity} item(s) in cart
-                </p>
-              )}
             </div>
           </div>
         </div>
